@@ -259,7 +259,7 @@ export default function EmployeePassport() {
 
     if (tabId === 'workout') {
       return (
-        <div className="anim-page-rise relative max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-32 min-h-screen flex flex-col">
+        <div className="anim-page-rise relative max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-32 min-h-full flex flex-col">
           <div className="text-center mb-5 sm:mb-6">
             <div
               className="font-display text-[10px] sm:text-[11px] tracking-[0.4em] mb-2"
@@ -359,7 +359,7 @@ export default function EmployeePassport() {
 
   return (
     <div
-      className="w-full min-h-screen flex items-center justify-center relative"
+      className="w-full min-h-dvh h-dvh flex items-center justify-center relative"
       style={{
         background: '#FFFFFF',
         fontFamily: '"DM Sans", system-ui, sans-serif'
