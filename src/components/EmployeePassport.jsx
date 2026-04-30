@@ -407,12 +407,25 @@ export default function EmployeePassport() {
           border-radius: inherit;
         }
 
-        @keyframes coverScaleAndFlip {
-          /* Phase 1: zoom out (0–35% = ~245ms of 700ms) */
-          0%   { transform: translateX(0)   scale(1)   rotateY(0deg); }
-          35%  { transform: translateX(15%) scale(0.7) rotateY(0deg); }
-          /* Phase 2: flip around left edge (35%–100% = ~455ms) */
-          100% { transform: translateX(15%) scale(0.7) rotateY(-180deg); }
+        @keyframes passportPulseCover {
+          0%   { transform: scale(1); }
+          18%  { transform: scale(0.7); }
+          79%  { transform: scale(0.7); }
+          100% { transform: scale(1); }
+        }
+        @keyframes passportPulseTab {
+          0%   { transform: scale(1); }
+          20%  { transform: scale(0.78); }
+          70%  { transform: scale(0.78); }
+          100% { transform: scale(1); }
+        }
+        @keyframes coverFlip {
+          0%   { transform: rotateY(0deg); }
+          100% { transform: rotateY(-180deg); }
+        }
+        @keyframes pageFadeOut {
+          0%   { opacity: 1; filter: blur(0); }
+          100% { opacity: 0; filter: blur(4px); }
         }
         @keyframes interiorReveal {
           0% {
@@ -457,27 +470,21 @@ export default function EmployeePassport() {
           50%  { transform: rotateY(-90deg);  box-shadow: -16px 0 28px -6px rgba(0,0,0,0.35); }
           100% { transform: rotateY(-180deg); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
-        @keyframes pageZoomOut {
-          0%   { opacity: 1; transform: scale(1);    filter: blur(0); }
-          100% { opacity: 0; transform: scale(0.85); filter: blur(4px); }
-        }
-        @keyframes pageZoomIn {
-          0%   { opacity: 0; transform: scale(0.92); filter: blur(6px); }
-          100% { opacity: 1; transform: scale(1);    filter: blur(0); }
-        }
 
-        .anim-cover-scale-and-flip {
-          animation: coverScaleAndFlip 700ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards;
+        .anim-cover-flip {
+          animation: coverFlip 350ms cubic-bezier(0.55, 0.05, 0.25, 1) 300ms forwards;
           transform-origin: left center;
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
           will-change: transform;
         }
+        .anim-page-fade-out {
+          animation: pageFadeOut 200ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards;
+          will-change: opacity, filter;
+        }
         .anim-reveal { animation: interiorReveal 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.45s both; will-change: transform, opacity, filter; }
         .anim-tab-rise { animation: tabRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 1.1s both; }
         .anim-cover-idle { animation: coverIdle 5s ease-in-out infinite; transform-origin: center center; }
-        .anim-page-zoom-out { animation: pageZoomOut 200ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards; will-change: transform, opacity, filter; }
-        .anim-page-zoom-in { animation: pageZoomIn 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both; will-change: transform, opacity, filter; }
         .page-flip {
           transform-origin: left center;
           transform-style: preserve-3d;
@@ -549,10 +556,10 @@ export default function EmployeePassport() {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         @media (prefers-reduced-motion: reduce) {
-          .anim-cover-scale-and-flip, .anim-reveal, .anim-tab-rise, .anim-cover-idle, .anim-page-rise, .anim-line-grow, .stamp-drop, .page-flip, .anim-page-zoom-out, .anim-page-zoom-in {
+          .anim-cover-flip, .anim-page-fade-out, .anim-reveal, .anim-tab-rise, .anim-cover-idle, .anim-page-rise, .anim-line-grow, .stamp-drop, .page-flip {
             animation: none !important;
           }
-          .anim-cover-scale-and-flip, .anim-page-zoom-out { opacity: 0 !important; }
+          .anim-cover-flip, .anim-page-fade-out { opacity: 0 !important; }
           .page-flip { display: none !important; }
         }
       `}</style>
@@ -577,7 +584,20 @@ export default function EmployeePassport() {
       <div
         className="absolute inset-0 md:relative md:inset-auto md:w-[420px] md:h-[620px]"
       >
-        {/* COVER — single element handles both the scale-down and the page-flip. */}
+        {/* SCALE LAYER — pulses (zoom out → flat → zoom back) so cover, pages, and destination share one scale. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            transformOrigin: 'center center',
+            animation: transition?.kind === 'cover-to-page'
+              ? `passportPulseCover ${COVER_TIMINGS.totalMs}ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards`
+              : transition?.kind === 'page-to-page'
+                ? `passportPulseTab ${TAB_TIMINGS.totalMs}ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards`
+                : undefined,
+            willChange: transition ? 'transform' : undefined
+          }}
+        >
+        {/* COVER — flips around left edge while the parent scale layer pulses. */}
         {view === 'cover' && (
           <div
             role={!transition ? 'button' : undefined}
@@ -592,7 +612,7 @@ export default function EmployeePassport() {
             aria-label={!transition ? 'Open passport' : undefined}
             className={`cover-bg absolute inset-0 flex flex-col items-center justify-between py-12 px-6 overflow-hidden focus:outline-none ${
               !transition ? 'anim-cover-idle cursor-pointer' : ''
-            } ${transition?.kind === 'cover-to-page' ? 'anim-cover-scale-and-flip pointer-events-none' : ''}`}
+            } ${transition?.kind === 'cover-to-page' ? 'anim-cover-flip pointer-events-none' : ''}`}
             style={{
               boxShadow: 'inset 0 0 120px rgba(0,0,0,0.25)',
               zIndex: 60,
@@ -664,20 +684,15 @@ export default function EmployeePassport() {
           </div>
         )}
 
-      {/* DESTINATION PAGE — visible on settled page or during any transition */}
+      {/* DESTINATION PAGE — layered at the bottom of the stack from the start of any transition.
+          No own zoom animation: the parent ScaleLayer's zoom-back-to-1 is the reveal. */}
       {(view === 'page' || transition) && (() => {
         const destTabId = transition?.to ?? activeTab;
-        const animClass = transition ? 'anim-page-zoom-in' : '';
-        const animDelay = transition?.kind === 'cover-to-page'
-          ? `${COVER_TIMINGS.pageStartDelayMs + (COVER_TIMINGS.pageCount - 1) * COVER_TIMINGS.staggerMs + COVER_TIMINGS.perPageMs}ms`
-          : transition?.kind === 'page-to-page'
-            ? `${TAB_TIMINGS.outgoingFadeMs + TAB_TIMINGS.flipBurstMs}ms`
-            : '0ms';
         return (
           <div
             key={`dest-${destTabId}`}
-            className={`absolute inset-0 paper-bg overflow-y-auto hide-scrollbar ${animClass}`}
-            style={{ zIndex: 10, animationDelay: animDelay }}
+            className="absolute inset-0 paper-bg overflow-y-auto hide-scrollbar"
+            style={{ zIndex: 10 }}
           >
             <div
               className="absolute inset-0 pointer-events-none"
@@ -695,7 +710,7 @@ export default function EmployeePassport() {
       {transition?.kind === 'page-to-page' && (
         <div
           key={`out-${transition.from}`}
-          className="absolute inset-0 paper-bg overflow-y-auto hide-scrollbar anim-page-zoom-out"
+          className="absolute inset-0 paper-bg overflow-y-auto hide-scrollbar anim-page-fade-out"
           style={{ zIndex: 20 }}
         >
           <div
@@ -718,6 +733,8 @@ export default function EmployeePassport() {
           startDelayMs={transition.kind === 'cover-to-page' ? COVER_TIMINGS.pageStartDelayMs : TAB_TIMINGS.outgoingFadeMs}
         />
       )}
+        </div>
+        {/* /SCALE LAYER */}
 
       {/* TAB BAR — only when settled on a page */}
       {view === 'page' && !transition && (
