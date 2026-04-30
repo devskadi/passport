@@ -407,13 +407,12 @@ export default function EmployeePassport() {
           border-radius: inherit;
         }
 
-        @keyframes coverScaleDown {
-          0%   { transform: scale(1); }
-          100% { transform: scale(0.7); }
-        }
-        @keyframes coverFlipPage {
-          0%   { transform: rotateY(0deg); }
-          100% { transform: rotateY(-180deg); }
+        @keyframes coverScaleAndFlip {
+          /* Phase 1: zoom out (0–35% = ~245ms of 700ms) */
+          0%   { transform: translateX(0)   scale(1)   rotateY(0deg); }
+          35%  { transform: translateX(15%) scale(0.7) rotateY(0deg); }
+          /* Phase 2: flip around left edge (35%–100% = ~455ms) */
+          100% { transform: translateX(15%) scale(0.7) rotateY(-180deg); }
         }
         @keyframes interiorReveal {
           0% {
@@ -467,9 +466,8 @@ export default function EmployeePassport() {
           100% { opacity: 1; transform: scale(1);    filter: blur(0); }
         }
 
-        .anim-cover-scale-down { animation: coverScaleDown 300ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards; transform-origin: center center; will-change: transform; }
-        .anim-cover-flip-page {
-          animation: coverFlipPage 350ms cubic-bezier(0.55, 0.05, 0.25, 1) 300ms forwards;
+        .anim-cover-scale-and-flip {
+          animation: coverScaleAndFlip 700ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards;
           transform-origin: left center;
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
@@ -551,10 +549,10 @@ export default function EmployeePassport() {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         @media (prefers-reduced-motion: reduce) {
-          .anim-cover-scale-down, .anim-cover-flip-page, .anim-reveal, .anim-tab-rise, .anim-cover-idle, .anim-page-rise, .anim-line-grow, .stamp-drop, .page-flip, .anim-page-zoom-out, .anim-page-zoom-in {
+          .anim-cover-scale-and-flip, .anim-reveal, .anim-tab-rise, .anim-cover-idle, .anim-page-rise, .anim-line-grow, .stamp-drop, .page-flip, .anim-page-zoom-out, .anim-page-zoom-in {
             animation: none !important;
           }
-          .anim-cover-flip-page, .anim-page-zoom-out { opacity: 0 !important; }
+          .anim-cover-scale-and-flip, .anim-page-zoom-out { opacity: 0 !important; }
           .page-flip { display: none !important; }
         }
       `}</style>
@@ -579,14 +577,8 @@ export default function EmployeePassport() {
       <div
         className="absolute inset-0 md:relative md:inset-auto md:w-[420px] md:h-[620px]"
       >
-        {/* COVER — visible while view === 'cover'.
-            Outer wrapper handles the zoom-out (scale from center).
-            Inner cover-bg handles the page-flip (rotateY around left edge, backface hidden). */}
+        {/* COVER — single element handles both the scale-down and the page-flip. */}
         {view === 'cover' && (
-          <div
-            className={`absolute inset-0 ${transition?.kind === 'cover-to-page' ? 'anim-cover-scale-down pointer-events-none' : ''}`}
-            style={{ zIndex: 60 }}
-          >
           <div
             role={!transition ? 'button' : undefined}
             tabIndex={!transition ? 0 : -1}
@@ -600,9 +592,10 @@ export default function EmployeePassport() {
             aria-label={!transition ? 'Open passport' : undefined}
             className={`cover-bg absolute inset-0 flex flex-col items-center justify-between py-12 px-6 overflow-hidden focus:outline-none ${
               !transition ? 'anim-cover-idle cursor-pointer' : ''
-            } ${transition?.kind === 'cover-to-page' ? 'anim-cover-flip-page' : ''}`}
+            } ${transition?.kind === 'cover-to-page' ? 'anim-cover-scale-and-flip pointer-events-none' : ''}`}
             style={{
               boxShadow: 'inset 0 0 120px rgba(0,0,0,0.25)',
+              zIndex: 60,
               willChange: 'transform'
             }}
           >
@@ -668,7 +661,6 @@ export default function EmployeePassport() {
                 tap to begin
               </div>
             </div>
-          </div>
           </div>
         )}
 
