@@ -8,6 +8,10 @@ html, body, #root {
   background: #FFFFFF;
 }
 
+html, body {
+  height: 100dvh;
+}
+
 body {
   overflow-x: hidden;
 }
