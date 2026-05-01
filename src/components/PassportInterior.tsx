@@ -1,34 +1,31 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { STOPS, TOTAL_PAGES } from '../data/stops';
+import { ACCENT, STOPS, TOTAL_PAGES } from '../data/stops';
+import type { Stop } from '../data/stops';
 import { useSwipeNav } from '../hooks/useSwipeNav';
+import type { StampRecord } from '../hooks/usePassportState';
+import { buildStopPayload, parsePayload } from '../lib/qrPayload';
 import AttendancePage from './AttendancePage';
 import MathWorkoutPage from './MathWorkoutPage';
+import QRScannerModal from './QRScannerModal';
 import SideTabs from './SideTabs';
 import StopPage from './StopPage';
-import type { StampRecord } from './StopPage';
 
-type StampMap = Record<string, StampRecord>;
+interface Props {
+  stamps: Record<string, StampRecord>;
+  onStamp: (stopId: string) => void;
+}
 
-export default function PassportInterior() {
+export default function PassportInterior({ stamps, onStamp }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [stamps, setStamps] = useState<StampMap>({});
+  const [scannerStop, setScannerStop] = useState<Stop | null>(null);
 
   const stampedIds = useMemo(() => new Set(Object.keys(stamps)), [stamps]);
 
-  const stampStop = (stopId: string) => {
-    setStamps((prev) => {
-      if (prev[stopId]) return prev; // already stamped
-      // Random rotation between -8° and +8° (inclusive), persisted with the stamp.
-      const rotation = Math.round(Math.random() * 16) - 8;
-      return {
-        ...prev,
-        [stopId]: {
-          stampedAt: new Date().toISOString(),
-          rotation
-        }
-      };
-    });
+  const resolveScannedStopName = (payload: string): string | null => {
+    const parsed = parsePayload(payload);
+    if (parsed.kind !== 'stop') return null;
+    return STOPS.find((s) => s.id === parsed.id)?.name ?? null;
   };
 
   const { containerRef, width, x, dragConstraints, onDragEnd } = useSwipeNav({
@@ -62,8 +59,8 @@ export default function PassportInterior() {
               pageNumber={i + 1}
               totalPages={TOTAL_PAGES}
               stamp={stamps[stop.id]}
-              onScan={() => console.log('scan triggered — wired in step 8')}
-              onForceStamp={() => stampStop(stop.id)}
+              onScan={() => setScannerStop(stop)}
+              onForceStamp={() => onStamp(stop.id)}
             />
           </div>
         ))}
@@ -97,6 +94,23 @@ export default function PassportInterior() {
         activeIndex={activeIndex}
         stampedIds={stampedIds}
         onSelect={setActiveIndex}
+      />
+
+      <QRScannerModal
+        open={!!scannerStop}
+        expectedPayload={
+          scannerStop ? buildStopPayload(scannerStop.id) : ''
+        }
+        accentColor={
+          scannerStop ? ACCENT[scannerStop.accent].bg : '#FFFFFF'
+        }
+        onSuccess={() => {
+          if (!scannerStop) return;
+          onStamp(scannerStop.id);
+          setScannerStop(null);
+        }}
+        onClose={() => setScannerStop(null)}
+        resolveScannedStopName={resolveScannedStopName}
       />
     </div>
   );
