@@ -5,10 +5,11 @@ import PassportInterior from './components/PassportInterior';
 import { usePassportState } from './hooks/usePassportState';
 
 export default function App() {
-  const { state, stampStop, markCoverOpened } = usePassportState();
+  const { state, stampStop, markCoverOpened, setSoundEnabled, resetAll } =
+    usePassportState();
 
   // Returning visitors (state.hasOpenedCover) skip the cover entirely.
-  // The initial value is captured once so changes mid-session don't snap us back.
+  // Capture once so changes mid-session don't snap us back to the cover.
   const initialPhase = useRef<'cover' | 'interior'>(
     state.hasOpenedCover ? 'interior' : 'cover'
   ).current;
@@ -19,13 +20,26 @@ export default function App() {
     setPhase('interior');
   };
 
+  const handleReset = () => {
+    if (window.confirm('Clear all stamps and reopen the passport?')) {
+      resetAll();
+      window.location.reload();
+    }
+  };
+
   return (
     <OpeningAnimation
       phase={phase}
       initialPhase={initialPhase}
       cover={<Cover onOpen={handleOpen} />}
       interior={
-        <PassportInterior stamps={state.stamps} onStamp={stampStop} />
+        <PassportInterior
+          stamps={state.stamps}
+          onStamp={stampStop}
+          soundEnabled={state.soundEnabled}
+          onToggleSound={() => setSoundEnabled(!state.soundEnabled)}
+          onReset={handleReset}
+        />
       }
     />
   );
