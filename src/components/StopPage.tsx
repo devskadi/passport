@@ -14,6 +14,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { ACCENT } from '../data/stops';
 import type { Stop, StopIcon } from '../data/stops';
+import type { StampRecord } from '../hooks/usePassportState';
 import { isDevMode } from '../lib/devMode';
 import Stamp from './Stamp';
 
@@ -26,11 +27,6 @@ const ICON_MAP: Record<StopIcon, LucideIcon> = {
   check: ClipboardList,
   plane: Plane
 };
-
-export interface StampRecord {
-  stampedAt: string;
-  rotation: number;
-}
 
 interface Props {
   stop: Stop;
