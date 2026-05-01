@@ -18,11 +18,6 @@ import FlipStack from './FlipStack.jsx';
 
 const TAB_ORDER = ['itinerary', 'attendance', 'workout'];
 
-function pageCountFor(from, to) {
-  const dist = Math.abs(TAB_ORDER.indexOf(from) - TAB_ORDER.indexOf(to));
-  return Math.min(10, 5 + dist * 2);
-}
-
 const COVER_TIMINGS = {
   coverScaleMs: 300,        // cover wrapper scales down (zoom out)
   coverFlipDelayMs: 300,    // cover begins its flip right when scale-down ends
@@ -36,9 +31,8 @@ const COVER_TIMINGS = {
 };
 const TAB_TIMINGS = {
   outgoingFadeMs: 200,
-  flipBurstMs: 500,
-  pageZoomInMs: 300,
-  totalMs: 1000
+  flipMs: 700,
+  totalMs: 950
 };
 
 export default function EmployeePassport() {
@@ -72,12 +66,8 @@ export default function EmployeePassport() {
 
   const handleTabChange = (nextTab) => {
     if (transition || nextTab === activeTab) return;
-    startTransition({
-      kind: 'page-to-page',
-      from: activeTab,
-      to: nextTab,
-      count: pageCountFor(activeTab, nextTab)
-    });
+    const direction = TAB_ORDER.indexOf(nextTab) > TAB_ORDER.indexOf(activeTab) ? 'next' : 'prev';
+    startTransition({ kind: 'page-to-page', from: activeTab, to: nextTab, direction });
   };
 
   const handleReset = () => {
@@ -94,13 +84,13 @@ export default function EmployeePassport() {
   const accentCycle = ['coral', 'turquoise', 'yellow', 'pink'];
 
   const itinerary = [
-    { n: 1, name: 'The Gateway Port', sub: 'Office Entrance / Guard Station', icon: 'gate' },
-    { n: 2, name: 'The Grand Hall', sub: 'Events Hall — Waiting Lounge · Photobooth', icon: 'camera' },
-    { n: 3, name: 'The Grand Hall', sub: 'Opening Program', icon: 'mic' },
-    { n: 4, name: "The Explorer's Agreement", sub: 'NDA & Training Agreement', icon: 'doc' },
-    { n: 5, name: 'Mini-Games', sub: 'Activity Block', icon: 'game' },
-    { n: 6, name: "Explorer's Assessment", sub: 'Training Area', icon: 'check' },
-    { n: 7, name: 'The Departure Gate', sub: 'Exit Area', icon: 'plane' }
+    { n: 1, name: 'The Gateway Port', sub: 'Office Entrance / Guard Station', icon: 'gate', label: 'ENTRANCE' },
+    { n: 2, name: 'The Grand Hall', sub: 'Events Hall — Waiting Lounge · Photobooth', icon: 'camera', label: 'LOUNGE' },
+    { n: 3, name: 'The Grand Hall', sub: 'Opening Program', icon: 'mic', label: 'PROGRAM' },
+    { n: 4, name: "The Explorer's Agreement", sub: 'NDA & Training Agreement', icon: 'doc', label: 'AGREEMENT' },
+    { n: 5, name: 'Mini-Games', sub: 'Activity Block', icon: 'game', label: 'GAMES' },
+    { n: 6, name: "Explorer's Assessment", sub: 'Training Area', icon: 'check', label: 'ASSESSMENT' },
+    { n: 7, name: 'The Departure Gate', sub: 'Exit Area', icon: 'plane', label: 'DEPARTURE' }
   ];
 
   const accentColor = (key) => {
@@ -190,7 +180,7 @@ export default function EmployeePassport() {
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className="font-display font-black text-2xl sm:text-3xl leading-none flex items-center justify-center rounded-lg"
+                            className="flex items-center justify-center rounded-lg"
                             style={{
                               background: accent.bg,
                               color: '#FFFFFF',
@@ -199,26 +189,20 @@ export default function EmployeePassport() {
                               boxShadow: `0 4px 10px -2px ${accent.bg}66`
                             }}
                           >
-                            {String(stop.n).padStart(2, '0')}
+                            {stopIcon(stop.icon, 22)}
                           </div>
                           <div
                             className="font-display text-[10px] sm:text-[11px] tracking-[0.3em] font-semibold"
                             style={{ color: accent.dark }}
                           >
-                            STOP
+                            {stop.label}
                           </div>
                         </div>
                         <div
-                          className="flex items-center justify-center rounded-lg"
-                          style={{
-                            background: '#FFFFFF',
-                            color: accent.dark,
-                            width: '40px',
-                            height: '40px',
-                            border: `1.5px solid ${accent.bg}40`
-                          }}
+                          className="font-display font-bold text-2xl sm:text-3xl leading-none"
+                          style={{ color: accent.dark }}
                         >
-                          {stopIcon(stop.icon, 20)}
+                          {String(stop.n).padStart(2, '0')}
                         </div>
                       </div>
 
@@ -299,7 +283,7 @@ export default function EmployeePassport() {
                   className="text-xs font-medium ml-2"
                   style={{ color: 'var(--ink-soft)' }}
                 >
-                  math-workout.app
+                  d1-math-workout.netlify.app
                 </span>
               </div>
               <span
@@ -310,45 +294,13 @@ export default function EmployeePassport() {
               </span>
             </div>
 
-            <div
-              className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center"
-              style={{
-                background:
-                  'repeating-linear-gradient(45deg, rgba(13,181,166,0.04) 0px, rgba(13,181,166,0.04) 12px, transparent 12px, transparent 24px)'
-              }}
-            >
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: 'var(--pink)', color: '#FFFFFF', boxShadow: '0 8px 20px -4px rgba(255,61,127,0.5)' }}
-              >
-                <Calculator size={32} strokeWidth={1.6} />
-              </div>
-              <h3
-                className="font-display font-bold text-xl sm:text-2xl mb-2"
-                style={{ color: 'var(--ink)' }}
-              >
-                Iframe slot
-              </h3>
-              <p
-                className="text-sm max-w-md leading-relaxed"
-                style={{ color: 'var(--ink-soft)' }}
-              >
-                The math drill web app will embed here. Dev team: drop an{' '}
-                <code
-                  className="px-1.5 py-0.5 rounded text-xs"
-                  style={{ background: 'rgba(13,181,166,0.12)', color: 'var(--turquoise-dark)' }}
-                >
-                  &lt;iframe src="..."&gt;
-                </code>{' '}
-                into this container.
-              </p>
-              <div
-                className="mt-6 font-hand text-base"
-                style={{ color: 'var(--ink-mute)' }}
-              >
-                awaiting handoff
-              </div>
-            </div>
+            <iframe
+              src="https://d1-math-workout.netlify.app/"
+              title="Math Workout"
+              className="w-full flex-1 border-0 bg-white"
+              loading="lazy"
+              allow="fullscreen"
+            />
           </div>
         </div>
       );
@@ -413,12 +365,6 @@ export default function EmployeePassport() {
           79%  { transform: scale(0.7); }
           100% { transform: scale(1); }
         }
-        @keyframes passportPulseTab {
-          0%   { transform: scale(1); }
-          20%  { transform: scale(0.78); }
-          70%  { transform: scale(0.78); }
-          100% { transform: scale(1); }
-        }
         @keyframes coverFlip {
           0%   { transform: rotateY(0deg); }
           100% { transform: rotateY(-180deg); }
@@ -469,6 +415,13 @@ export default function EmployeePassport() {
           0%   { transform: rotateY(0deg);    box-shadow: -8px 0 16px -4px rgba(0,0,0,0.25); }
           50%  { transform: rotateY(-90deg);  box-shadow: -16px 0 28px -6px rgba(0,0,0,0.35); }
           100% { transform: rotateY(-180deg); box-shadow: 0 0 0 rgba(0,0,0,0); }
+        }
+        @keyframes pageFlipPrev {
+          /* Pivot stays on the left spine (same as next); only the rotation direction reverses
+             so the page swings the opposite way through the arc. */
+          0%   { transform: rotateY(0deg);   box-shadow: -8px 0 16px -4px rgba(0,0,0,0.25); }
+          50%  { transform: rotateY(90deg);  box-shadow: -16px 0 28px -6px rgba(0,0,0,0.35); }
+          100% { transform: rotateY(180deg); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
 
         .anim-cover-flip {
@@ -591,10 +544,8 @@ export default function EmployeePassport() {
             transformOrigin: 'center center',
             animation: transition?.kind === 'cover-to-page'
               ? `passportPulseCover ${COVER_TIMINGS.totalMs}ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards`
-              : transition?.kind === 'page-to-page'
-                ? `passportPulseTab ${TAB_TIMINGS.totalMs}ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards`
-                : undefined,
-            willChange: transition ? 'transform' : undefined
+              : undefined,
+            willChange: transition?.kind === 'cover-to-page' ? 'transform' : undefined
           }}
         >
         {/* COVER — flips around left edge while the parent scale layer pulses. */}
@@ -724,13 +675,22 @@ export default function EmployeePassport() {
         </div>
       )}
 
-      {/* FLIP STACK — colored pages riffling after the cover starts flipping (cover counts as #1) */}
-      {transition && (
+      {/* FLIP STACK — cover→page: 14 colored riffle. tab→tab: single neutral page. */}
+      {transition?.kind === 'cover-to-page' && (
         <FlipStack
-          count={transition.kind === 'cover-to-page' ? COVER_TIMINGS.pageCount : transition.count}
-          perPageMs={transition.kind === 'cover-to-page' ? COVER_TIMINGS.perPageMs : 250}
-          staggerMs={transition.kind === 'cover-to-page' ? COVER_TIMINGS.staggerMs : 35}
-          startDelayMs={transition.kind === 'cover-to-page' ? COVER_TIMINGS.pageStartDelayMs : TAB_TIMINGS.outgoingFadeMs}
+          count={COVER_TIMINGS.pageCount}
+          perPageMs={COVER_TIMINGS.perPageMs}
+          staggerMs={COVER_TIMINGS.staggerMs}
+          startDelayMs={COVER_TIMINGS.pageStartDelayMs}
+        />
+      )}
+      {transition?.kind === 'page-to-page' && (
+        <FlipStack
+          count={1}
+          perPageMs={TAB_TIMINGS.flipMs}
+          startDelayMs={TAB_TIMINGS.outgoingFadeMs}
+          color="#FFF8EC"
+          direction={transition.direction}
         />
       )}
         </div>
