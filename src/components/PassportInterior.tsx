@@ -1,8 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ACCENT, STOPS, TOTAL_PAGES } from '../data/stops';
 import type { Stop } from '../data/stops';
-import { useSwipeNav } from '../hooks/useSwipeNav';
 import type { StampRecord } from '../hooks/usePassportState';
 import { useStampSound } from '../hooks/useStampSound';
 import { buildStopPayload, parsePayload } from '../lib/qrPayload';
@@ -12,8 +11,8 @@ import MathWorkoutPage from './MathWorkoutPage';
 import SideTabs from './SideTabs';
 import StopPage from './StopPage';
 
-// Lazy-load the scanner — html5-qrcode is ~150KB gz that we don't want
-// in the initial bundle since most users tap "Scan QR" only once per stop.
+// Lazy-load the scanner — html5-qrcode is ~150KB gz that we don't want in
+// the initial bundle since most users tap "Scan QR" only once per stop.
 const QRScannerModal = lazy(() => import('./QRScannerModal'));
 
 interface Props {
@@ -32,10 +31,17 @@ export default function PassportInterior({
   onReset
 }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [scannerStop, setScannerStop] = useState<Stop | null>(null);
 
   const stampedIds = useMemo(() => new Set(Object.keys(stamps)), [stamps]);
   const playStampSound = useStampSound(soundEnabled);
+
+  const goToPage = (newIndex: number) => {
+    if (newIndex === activeIndex) return;
+    setDirection(newIndex > activeIndex ? 1 : -1);
+    setActiveIndex(newIndex);
+  };
 
   // Wraps onStamp so every successful stamp also plays the sound.
   const stampWithSound = (stopId: string) => {
@@ -50,67 +56,25 @@ export default function PassportInterior({
     return STOPS.find((s) => s.id === parsed.id)?.name ?? null;
   };
 
-  const { containerRef, width, x, dragConstraints, onDragEnd } = useSwipeNav({
-    activeIndex,
-    pageCount: TOTAL_PAGES,
-    onChange: setActiveIndex
-  });
-
   return (
-    <div
-      ref={containerRef}
-      className="relative h-full w-full overflow-hidden bg-cream touch-pan-y"
-    >
-      <motion.div
-        className="flex h-full"
-        style={{ x, width: width * TOTAL_PAGES }}
-        drag="x"
-        dragConstraints={dragConstraints}
-        dragElastic={0.15}
-        onDragEnd={onDragEnd}
-      >
-        {STOPS.map((stop, i) => (
-          <div
-            key={stop.id}
-            className="h-full flex-shrink-0"
-            style={{ width }}
-            aria-hidden={activeIndex !== i ? true : undefined}
-          >
-            <StopPage
-              stop={stop}
-              pageNumber={i + 1}
-              totalPages={TOTAL_PAGES}
-              stamp={stamps[stop.id]}
-              onScan={() => setScannerStop(stop)}
-              onForceStamp={() => stampWithSound(stop.id)}
-            />
-          </div>
-        ))}
-
-        <div
-          key="attendance"
-          className="h-full flex-shrink-0"
-          style={{ width }}
-          aria-hidden={activeIndex !== STOPS.length ? true : undefined}
+    <div className="relative h-full w-full overflow-hidden bg-cream">
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
+        <motion.div
+          key={activeIndex}
+          className="absolute inset-0"
+          initial={{ x: direction > 0 ? '8%' : '-8%', opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: direction > 0 ? '-8%' : '8%', opacity: 0 }}
+          transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
         >
-          <AttendancePage
-            pageNumber={STOPS.length + 1}
-            totalPages={TOTAL_PAGES}
+          <PageRenderer
+            index={activeIndex}
+            stamps={stamps}
+            onScan={(stop) => setScannerStop(stop)}
+            onForceStamp={stampWithSound}
           />
-        </div>
-
-        <div
-          key="workout"
-          className="h-full flex-shrink-0"
-          style={{ width }}
-          aria-hidden={activeIndex !== STOPS.length + 1 ? true : undefined}
-        >
-          <MathWorkoutPage
-            pageNumber={STOPS.length + 2}
-            totalPages={TOTAL_PAGES}
-          />
-        </div>
-      </motion.div>
+        </motion.div>
+      </AnimatePresence>
 
       <InteriorToolbar
         soundEnabled={soundEnabled}
@@ -121,7 +85,7 @@ export default function PassportInterior({
       <SideTabs
         activeIndex={activeIndex}
         stampedIds={stampedIds}
-        onSelect={setActiveIndex}
+        onSelect={goToPage}
       />
 
       {scannerStop && (
@@ -140,6 +104,49 @@ export default function PassportInterior({
         </Suspense>
       )}
     </div>
+  );
+}
+
+interface PageRendererProps {
+  index: number;
+  stamps: Record<string, StampRecord>;
+  onScan: (stop: Stop) => void;
+  onForceStamp: (stopId: string) => void;
+}
+
+function PageRenderer({
+  index,
+  stamps,
+  onScan,
+  onForceStamp
+}: PageRendererProps) {
+  if (index < STOPS.length) {
+    const stop = STOPS[index];
+    if (!stop) return null;
+    return (
+      <StopPage
+        stop={stop}
+        pageNumber={index + 1}
+        totalPages={TOTAL_PAGES}
+        stamp={stamps[stop.id]}
+        onScan={() => onScan(stop)}
+        onForceStamp={() => onForceStamp(stop.id)}
+      />
+    );
+  }
+  if (index === STOPS.length) {
+    return (
+      <AttendancePage
+        pageNumber={STOPS.length + 1}
+        totalPages={TOTAL_PAGES}
+      />
+    );
+  }
+  return (
+    <MathWorkoutPage
+      pageNumber={STOPS.length + 2}
+      totalPages={TOTAL_PAGES}
+    />
   );
 }
 

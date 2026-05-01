@@ -211,7 +211,7 @@ export default function StopPage({
             className="font-hand text-base"
             style={{ color: 'var(--ink-mute)' }}
           >
-            swipe to continue →
+            tap a tab to navigate
           </span>
         </div>
       </div>

@@ -51,7 +51,7 @@ export default function MathWorkoutPage({ pageNumber, totalPages }: Props) {
             className="font-hand text-base"
             style={{ color: 'var(--ink-mute)' }}
           >
-            ← swipe to go back
+            tap a tab to navigate
           </span>
         </div>
       </div>
