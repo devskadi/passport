@@ -5,15 +5,22 @@ import WorkoutResults from './WorkoutResults';
 import { Calculator } from 'lucide-react';
 
 export default function MathWorkout() {
-  const [gameState, setGameState] = useState('naming'); // 'naming' | 'lobby' | 'countdown' | 'playing' | 'finished'
+  const [gameState, setGameState] = useState(() => {
+    return localStorage.getItem('passport_user_name') ? 'lobby' : 'naming';
+  }); 
   const [difficulty, setDifficulty] = useState('normal');
   const [results, setResults] = useState(null);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('passport_user_name') || '';
+  });
 
   useEffect(() => {
     // Sync name if it changes elsewhere
     const handleStorage = () => {
-      // We don't want to automatically fill it during naming phase if user wants it empty
+      const storedName = localStorage.getItem('passport_user_name');
+      if (storedName) {
+        setUserName(storedName);
+      }
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
