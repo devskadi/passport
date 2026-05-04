@@ -525,45 +525,8 @@ export default function EmployeePassport() {
 
           {/* MATH WORKOUT */}
           {activeTab === 'workout' && (
-            <div className="anim-page-rise relative max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-32 min-h-screen flex flex-col">
-              <div className="text-center mb-5 sm:mb-6">
-                <div
-                  className="font-display text-[10px] sm:text-[11px] tracking-[0.4em] mb-2"
-                  style={{ color: 'var(--pink)' }}
-                >
-                  · DAILY DRILLS ·
-                </div>
-                <h1
-                  className="font-display font-black text-4xl sm:text-5xl mb-2"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  Math Workout
-                </h1>
-                <div className="font-hand text-lg sm:text-xl" style={{ color: 'var(--coral-dark)' }}>
-                  warm up your reasoning muscles
-                </div>
-              </div>
-
-              <div
-                className="stamp-card rounded-2xl flex-1 flex flex-col overflow-hidden relative"
-                style={{ minHeight: '480px' }}
-              >
-                <div
-                  className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b"
-                  style={{
-                    background: 'rgba(13,181,166,0.06)',
-                    borderColor: 'rgba(26,26,46,0.08)'
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--coral)' }} />
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--yellow)' }} />
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--turquoise)' }} />
-                    </div>
-                  </div>
-                </div>
-
+            <div className="anim-page-rise relative w-full lg:max-w-5xl mx-auto min-h-screen flex flex-col">
+              <div className="flex-1 flex flex-col pb-32">
                 <MathWorkout />
               </div>
             </div>

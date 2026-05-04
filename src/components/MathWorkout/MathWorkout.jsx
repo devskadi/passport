@@ -2,21 +2,29 @@ import React, { useState, useEffect } from 'react';
 import WorkoutLobby from './WorkoutLobby';
 import WorkoutGame from './WorkoutGame';
 import WorkoutResults from './WorkoutResults';
+import { Calculator } from 'lucide-react';
 
 export default function MathWorkout() {
-  const [gameState, setGameState] = useState('lobby'); // 'lobby' | 'countdown' | 'playing' | 'finished'
+  const [gameState, setGameState] = useState('naming'); // 'naming' | 'lobby' | 'countdown' | 'playing' | 'finished'
   const [difficulty, setDifficulty] = useState('normal');
   const [results, setResults] = useState(null);
-  const [userName, setUserName] = useState(localStorage.getItem('passport_user_name') || 'Explorer');
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     // Sync name if it changes elsewhere
     const handleStorage = () => {
-      setUserName(localStorage.getItem('passport_user_name') || 'Explorer');
+      // We don't want to automatically fill it during naming phase if user wants it empty
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
+
+  const handleEnterWorkout = () => {
+    if (userName.trim()) {
+      localStorage.setItem('passport_user_name', userName.trim());
+      setGameState('lobby');
+    }
+  };
 
   const startWorkout = (selectedDifficulty) => {
     setDifficulty(selectedDifficulty);
@@ -48,7 +56,57 @@ export default function MathWorkout() {
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col">
+    <div className="w-full h-full flex-1 flex flex-col">
+      {gameState === 'naming' && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div
+            className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
+            style={{ 
+              background: 'var(--pink)', 
+              color: '#FFFFFF', 
+              boxShadow: '0 12px 24px -6px rgba(255,61,127,0.4)',
+              transform: 'rotate(-5deg)'
+            }}
+          >
+            <Calculator size={40} strokeWidth={1.5} />
+          </div>
+
+          <h2 className="font-display font-black text-3xl sm:text-4xl mb-2" style={{ color: 'var(--ink)' }}>
+            Math Workout
+          </h2>
+          <p className="font-hand text-xl mb-8" style={{ color: 'var(--ink-soft)' }}>
+            Tell us your name to start the drill
+          </p>
+
+          <div className="w-full max-w-sm flex flex-col gap-4">
+            <input 
+              type="text" 
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Enter your name here"
+              className="w-full px-6 py-4 rounded-2xl text-center text-lg font-bold border-2 transition-all focus:outline-none"
+              style={{ 
+                borderColor: 'rgba(26,26,46,0.1)',
+                color: 'var(--ink)',
+                background: '#FFFFFF'
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleEnterWorkout()}
+            />
+            <button
+              onClick={handleEnterWorkout}
+              disabled={!userName.trim()}
+              className="w-full py-4 rounded-2xl font-display font-bold text-lg text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:scale-100"
+              style={{ 
+                background: 'var(--turquoise)',
+                boxShadow: '0 8px 16px -4px rgba(0,210,181,0.3)'
+              }}
+            >
+              Enter Workout
+            </button>
+          </div>
+        </div>
+      )}
+
       {gameState === 'lobby' && (
         <WorkoutLobby onStart={startWorkout} userName={userName} />
       )}

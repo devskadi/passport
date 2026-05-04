@@ -32,12 +32,12 @@ export default function WorkoutLobby({ onStart, userName }) {
         pick your level and sharpen your mind
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl mb-12">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl mb-12 px-2">
         {DIFFICULTIES.map((diff) => (
           <button
             key={diff.id}
             onClick={() => onStart(diff.id)}
-            className="group relative flex flex-col items-center p-6 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+            className="group relative flex flex-col items-center p-3 sm:p-6 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
             style={{
               background: '#FFFFFF',
               border: '1.5px solid rgba(26,26,46,0.08)',
@@ -45,13 +45,13 @@ export default function WorkoutLobby({ onStart, userName }) {
             }}
           >
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:rotate-12"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4 transition-transform group-hover:rotate-12"
               style={{ background: `${diff.color}15`, color: diff.color }}
             >
-              <diff.icon size={24} />
+              <diff.icon size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h3 className="font-display font-bold text-lg mb-1" style={{ color: 'var(--ink)' }}>{diff.name}</h3>
-            <p className="text-xs" style={{ color: 'var(--ink-mute)' }}>{diff.desc}</p>
+            <h3 className="font-display font-bold text-sm sm:text-lg mb-0.5 sm:mb-1" style={{ color: 'var(--ink)' }}>{diff.name}</h3>
+            <p className="text-[10px] sm:text-xs leading-tight" style={{ color: 'var(--ink-mute)' }}>{diff.desc}</p>
             
             <div 
               className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -65,7 +65,7 @@ export default function WorkoutLobby({ onStart, userName }) {
         <div className="flex items-center gap-2 mb-4 px-2">
           <Trophy size={18} style={{ color: 'var(--yellow-dark)' }} />
           <span className="font-display font-bold text-sm tracking-wider" style={{ color: 'var(--ink-soft)' }}>
-            HALL OF FAME
+            Rankings
           </span>
         </div>
         
