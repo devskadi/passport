@@ -3,13 +3,6 @@
   publish = "dist"
   functions = "netlify/functions"
 
-[build.environment]
-  # These env vars hold non-secret config (column names, public API host).
-  # Their values appear in source by design, so exclude them from secret scanning.
-  # The actual secrets — LARK_APP_ID, LARK_APP_SECRET, LARK_BASE_APP_TOKEN,
-  # LARK_TABLE_ID — remain scanned and must never be committed.
-  SECRETS_SCAN_OMIT_KEYS = "LARK_FIELD_NAME,LARK_FIELD_EMAIL,LARK_FIELD_BRANCH,LARK_FIELD_CLOCKIN,LARK_API_BASE"
-
 [dev]
   command = "npm run dev"
   framework = "vite"

@@ -61,7 +61,7 @@ export default function AttendanceForm() {
         })
       : '';
     return (
-      <div className="anim-page-rise relative max-w-2xl mx-auto px-5 sm:px-6 pt-12 sm:pt-16 pb-36 min-h-full flex flex-col items-center justify-center">
+      <div className="anim-page-rise relative max-w-2xl mx-auto px-5 sm:px-6 pt-12 sm:pt-16 pb-36 min-h-screen flex flex-col items-center justify-center">
         <div
           className="font-display text-[10px] sm:text-[11px] tracking-[0.4em] mb-2"
           style={{ color: 'var(--turquoise-dark)' }}
