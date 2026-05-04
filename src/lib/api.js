@@ -1,21 +1,39 @@
+import { supabase } from './supabase';
+
 export async function submitAttendance({ fullName, email, branch }) {
-  const res = await fetch('/api/lark-attendance', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fullName, email, branch })
-  });
+/* Lines 2-24 omitted */
+}
 
-  let data = null;
-  try {
-    data = await res.json();
-  } catch {
-    // non-JSON response
-  }
+export async function saveMathScore(entry) {
+  const { data, error } = await supabase
+    .from('math_workout_scores')
+    .upsert(
+      { 
+        user_name: entry.userName, 
+        difficulty: entry.difficulty, 
+        score: Math.round(entry.score), 
+        time_seconds: entry.time,
+        accuracy: entry.accuracy,
+        wrong_count: entry.wrong
+      }, 
+      { onConflict: 'user_name,difficulty' }
+    )
+    .select();
 
-  if (!res.ok || !data?.ok) {
-    const message = data?.error || `Check-in failed (${res.status})`;
-    throw new Error(message);
-  }
-
+  if (error) throw error;
   return data;
 }
+
+export async function getLeaderboard(difficulty) {
+  const { data, error } = await supabase
+    .from('math_workout_scores')
+    .select('*')
+    .eq('difficulty', difficulty)
+    .order('score', { ascending: false })
+    .order('time_seconds', { ascending: true })
+    .limit(10);
+
+  if (error) throw error;
+  return data;
+}
+

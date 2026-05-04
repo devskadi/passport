@@ -1,5 +1,6 @@
-import React from 'react';
-import { Calculator, Trophy, Zap, Flame, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calculator, Trophy, Zap, Flame, Star, Loader2 } from 'lucide-react';
+import { getLeaderboard } from '../../lib/api';
 
 const DIFFICULTIES = [
   { id: 'easy', name: 'Easy', desc: 'Basics: + and -', icon: Zap, color: 'var(--turquoise)' },
@@ -8,8 +9,25 @@ const DIFFICULTIES = [
 ];
 
 export default function WorkoutLobby({ onStart, userName }) {
-  const scores = JSON.parse(localStorage.getItem('math_workout_scores') || '[]');
-  const topScores = scores.slice(0, 5);
+  const [selectedDiff, setSelectedDiff] = useState('normal');
+  const [dbScores, setDbScores] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Filter scores by the selected difficulty from Supabase
+  useEffect(() => {
+    async function fetchScores() {
+      setLoading(true);
+      try {
+        const data = await getLeaderboard(selectedDiff);
+        setDbScores(data || []);
+      } catch (err) {
+        console.error('Failed to fetch leaderboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchScores();
+  }, [selectedDiff]);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -32,16 +50,18 @@ export default function WorkoutLobby({ onStart, userName }) {
         pick your level and sharpen your mind
       </p>
 
-      <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl mb-12 px-2">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl mb-8 px-2">
         {DIFFICULTIES.map((diff) => (
           <button
             key={diff.id}
-            onClick={() => onStart(diff.id)}
+            onClick={() => setSelectedDiff(diff.id)}
             className="group relative flex flex-col items-center p-3 sm:p-6 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
             style={{
               background: '#FFFFFF',
               border: '1.5px solid rgba(26,26,46,0.08)',
-              boxShadow: '0 4px 12px rgba(26,26,46,0.04)'
+              boxShadow: '0 4px 12px rgba(26,26,46,0.04)',
+              borderColor: selectedDiff === diff.id ? diff.color : 'rgba(26,26,46,0.08)',
+              borderWidth: '2px'
             }}
           >
             <div 
@@ -52,42 +72,59 @@ export default function WorkoutLobby({ onStart, userName }) {
             </div>
             <h3 className="font-display font-bold text-sm sm:text-lg mb-0.5 sm:mb-1" style={{ color: 'var(--ink)' }}>{diff.name}</h3>
             <p className="text-[10px] sm:text-xs leading-tight" style={{ color: 'var(--ink-mute)' }}>{diff.desc}</p>
-            
-            <div 
-              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style={{ border: `2px solid ${diff.color}` }}
-            />
           </button>
         ))}
+      </div>
+
+      <div className="w-full max-w-md mb-8">
+        <button
+          onClick={() => onStart(selectedDiff)}
+          className="w-full py-4 rounded-2xl font-display font-bold text-lg text-white transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          style={{ 
+            background: 'var(--turquoise)',
+            boxShadow: '0 8px 16px -4px rgba(0,210,181,0.3)'
+          }}
+        >
+          Enter Workout ({selectedDiff.toUpperCase()})
+        </button>
       </div>
 
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2 mb-4 px-2">
           <Trophy size={18} style={{ color: 'var(--yellow-dark)' }} />
           <span className="font-display font-bold text-sm tracking-wider" style={{ color: 'var(--ink-soft)' }}>
-            Rankings
+            Rankings: {selectedDiff.toUpperCase()}
           </span>
         </div>
         
-        <div className="stamp-card rounded-xl overflow-hidden divide-y divide-slate-100">
-          {topScores.length > 0 ? (
-            topScores.map((entry, i) => (
+        <div className="stamp-card rounded-xl overflow-hidden divide-y divide-slate-100 min-h-[120px] flex flex-col">
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center p-8 text-turquoise">
+              <Loader2 className="animate-spin" size={24} />
+            </div>
+          ) : dbScores.length > 0 ? (
+            dbScores.map((entry, i) => (
               <div key={entry.id || i} className="flex items-center justify-between p-3 sm:px-4">
                 <div className="flex items-center gap-3">
                   <span className="font-display font-black text-lg w-6" style={{ color: i === 0 ? 'var(--yellow-dark)' : 'var(--ink-mute)' }}>
                     {i + 1}
                   </span>
-                  <span className="font-medium text-sm text-left" style={{ color: 'var(--ink)' }}>{entry.userName}</span>
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium text-sm" style={{ color: 'var(--ink)' }}>{entry.user_name}</span>
+                    {entry.user_name === userName && (
+                      <span className="text-[9px] font-bold uppercase tracking-tight text-turquoise">Personal Best</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-xs font-bold" style={{ color: 'var(--turquoise-dark)' }}>{Math.round(entry.score)} pts</div>
-                  <div className="text-[10px]" style={{ color: 'var(--ink-mute)' }}>{entry.time.toFixed(1)}s</div>
+                  <div className="text-[10px]" style={{ color: 'var(--ink-mute)' }}>{entry.time_seconds.toFixed(1)}s</div>
                 </div>
               </div>
             ))
           ) : (
             <div className="p-8 text-center text-sm" style={{ color: 'var(--ink-mute)' }}>
-              No records yet. Be the first!
+              No records for {selectedDiff} yet.
             </div>
           )}
         </div>

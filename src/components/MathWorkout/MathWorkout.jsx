@@ -3,15 +3,24 @@ import WorkoutLobby from './WorkoutLobby';
 import WorkoutGame from './WorkoutGame';
 import WorkoutResults from './WorkoutResults';
 import { Calculator } from 'lucide-react';
+import { saveMathScore } from '../../lib/api';
 
 export default function MathWorkout() {
   const [gameState, setGameState] = useState(() => {
-    return localStorage.getItem('passport_user_name') ? 'lobby' : 'naming';
+    try {
+      return localStorage.getItem('passport_user_name') ? 'lobby' : 'naming';
+    } catch (e) {
+      return 'naming';
+    }
   }); 
   const [difficulty, setDifficulty] = useState('normal');
   const [results, setResults] = useState(null);
   const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('passport_user_name') || '';
+    try {
+      return localStorage.getItem('passport_user_name') || '';
+    } catch (e) {
+      return '';
+    }
   });
 
   useEffect(() => {
@@ -48,18 +57,40 @@ export default function MathWorkout() {
     setResults(null);
   };
 
-  const saveScore = (newResult) => {
+  const saveScore = async (newResult) => {
     const scores = JSON.parse(localStorage.getItem('math_workout_scores') || '[]');
+    
+    // Check if user already has a score for this difficulty
+    const existingIndex = scores.findIndex(s => s.userName === userName && s.difficulty === difficulty);
+    
     const entry = {
       ...newResult,
       userName,
       date: new Date().toISOString(),
       id: Date.now()
     };
-    scores.push(entry);
-    // Sort by shortest time, then highest score
-    scores.sort((a, b) => a.time - b.time || b.score - a.score);
-    localStorage.setItem('math_workout_scores', JSON.stringify(scores.slice(0, 50))); // Keep top 50
+
+    if (existingIndex !== -1) {
+      // If new score is higher (or same score but faster time), overwrite
+      const prev = scores[existingIndex];
+      if (newResult.score > prev.score || (newResult.score === prev.score && newResult.time < prev.time)) {
+        scores[existingIndex] = entry;
+      }
+    } else {
+      scores.push(entry);
+    }
+
+    // Sort globally still for Hall of Fame if needed, but we'll filter in the lobby
+    scores.sort((a, b) => b.score - a.score || a.time - b.time);
+    localStorage.setItem('math_workout_scores', JSON.stringify(scores.slice(0, 100))); // Keep top 100
+
+    // Save to Supabase
+    try {
+      await saveMathScore(entry);
+      console.log('Score synced to Supabase');
+    } catch (err) {
+      console.error('Database sync failed:', err);
+    }
   };
 
   return (
