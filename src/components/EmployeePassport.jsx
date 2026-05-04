@@ -14,6 +14,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import AttendanceForm from './AttendanceForm.jsx';
+import MathWorkout from './MathWorkout/MathWorkout.jsx';
 
 export default function EmployeePassport() {
   const [phase, setPhase] = useState('closed'); // 'closed' | 'opening' | 'open'
@@ -560,64 +561,10 @@ export default function EmployeePassport() {
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--yellow)' }} />
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--turquoise)' }} />
                     </div>
-                    <span
-                      className="text-xs font-medium ml-2"
-                      style={{ color: 'var(--ink-soft)' }}
-                    >
-                      math-workout.app
-                    </span>
                   </div>
-                  <span
-                    className="text-[10px] font-mono uppercase tracking-wider"
-                    style={{ color: 'var(--ink-mute)' }}
-                  >
-                    iframe
-                  </span>
                 </div>
 
-                {/*
-                  DEV NOTE: replace this placeholder block with the real iframe:
-                  <iframe src="https://your-math-app.example.com" className="w-full flex-1 border-0" />
-                */}
-                <div
-                  className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center"
-                  style={{
-                    background:
-                      'repeating-linear-gradient(45deg, rgba(13,181,166,0.04) 0px, rgba(13,181,166,0.04) 12px, transparent 12px, transparent 24px)'
-                  }}
-                >
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                    style={{ background: 'var(--pink)', color: '#FFFFFF', boxShadow: '0 8px 20px -4px rgba(255,61,127,0.5)' }}
-                  >
-                    <Calculator size={32} strokeWidth={1.6} />
-                  </div>
-                  <h3
-                    className="font-display font-bold text-xl sm:text-2xl mb-2"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    Iframe slot
-                  </h3>
-                  <p
-                    className="text-sm max-w-md leading-relaxed"
-                    style={{ color: 'var(--ink-soft)' }}
-                  >
-                    The math drill web app will embed here. Dev team: drop an{' '}
-                    <code
-                      className="px-1.5 py-0.5 rounded text-xs"
-                      style={{ background: 'rgba(13,181,166,0.12)', color: 'var(--turquoise-dark)' }}
-                    >
-                      &lt;iframe src="..."&gt;
-                    </code>{' '}
-                    into this container.
-                  </p>
-                  <div
-                    className="mt-6 font-hand text-base"
-                    style={{ color: 'var(--ink-mute)' }}
-                  >
-                    awaiting handoff
-                  </div>
-                </div>
+                <MathWorkout />
               </div>
             </div>
           )}

@@ -37,6 +37,7 @@ export default function AttendanceForm() {
         branch
       });
       setResult(data);
+      localStorage.setItem('passport_user_name', fullName.trim());
       setStatus('success');
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
