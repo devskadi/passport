@@ -46,7 +46,7 @@ export default function WorkoutGame({ difficulty, onFinish, onBack, isCountdown,
   const currentQuestion = questions[currentIndex];
 
   const handleKeyPress = (num) => {
-    if (isCountdown) return;
+    if (isCountdown || showSuccess || showPenalty) return;
     
     const newVal = input + num;
     setInput(newVal);
@@ -87,14 +87,8 @@ export default function WorkoutGame({ difficulty, onFinish, onBack, isCountdown,
   };
 
   const calculateScore = (count, time, wrong) => {
-    // Base score based on count and difficulty
-    const multipliers = { easy: 100, normal: 200, hard: 400 };
-    const base = count * (multipliers[difficulty] || 200);
-    // Time bonus (faster = more)
-    const timeBonus = Math.max(0, 5000 - (time * 20));
-    // Accuracy penalty
-    const accuracyBonus = Math.max(0, 1000 - (wrong * 150));
-    return Math.floor(base + timeBonus + accuracyBonus);
+    // New logic: Score is just how many were correct out of the total
+    return Math.max(0, count - wrong);
   };
 
   const formatTime = (ms) => {
@@ -162,7 +156,7 @@ export default function WorkoutGame({ difficulty, onFinish, onBack, isCountdown,
         <div className="flex flex-col items-end">
           <span className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Score</span>
           <div className="font-sans font-black text-xl" style={{ color: 'var(--ink)' }}>
-            {currentIndex + 1} <span className="text-ink-mute text-sm font-medium">/ {questions.length}</span>
+            {Math.max(0, questions.length - wrongCount)} <span className="text-ink-mute text-sm font-medium">/ {questions.length}</span>
           </div>
         </div>
       </div>

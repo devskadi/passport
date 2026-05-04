@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import WorkoutLobby from './WorkoutLobby';
 import WorkoutGame from './WorkoutGame';
 import WorkoutResults from './WorkoutResults';
-import { Calculator } from 'lucide-react';
-import { saveMathScore } from '../../lib/api';
+import { Calculator, Loader2 } from 'lucide-react';
+import { saveMathScore, registerUser } from '../../lib/api';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 export default function MathWorkout() {
-  const [gameState, setGameState] = useState(() => {
-    try {
-      return localStorage.getItem('passport_user_name') ? 'lobby' : 'naming';
-    } catch (e) {
-      return 'naming';
-    }
-  }); 
+  const [gameState, setGameState] = useState('naming');
+  const [isRegistering, setIsRegistering] = useState(false);
   const [difficulty, setDifficulty] = useState('normal');
   const [results, setResults] = useState(null);
   const [userName, setUserName] = useState(() => {
@@ -35,10 +31,21 @@ export default function MathWorkout() {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const handleEnterWorkout = () => {
+  const handleEnterWorkout = async () => {
     if (userName.trim()) {
-      localStorage.setItem('passport_user_name', userName.trim());
-      setGameState('lobby');
+      setIsRegistering(true);
+      try {
+        await registerUser(userName.trim());
+        localStorage.setItem('passport_user_name', userName.trim());
+        setGameState('lobby');
+      } catch (err) {
+        console.error('Failed to register user:', err);
+        // Fallback to local-only if DB fails
+        localStorage.setItem('passport_user_name', userName.trim());
+        setGameState('lobby');
+      } finally {
+        setIsRegistering(false);
+      }
     }
   };
 
@@ -50,6 +57,7 @@ export default function MathWorkout() {
   const finishWorkout = (finalResults) => {
     setResults(finalResults);
     setGameState('finished');
+    saveScore(finalResults); // Automatically save on finish
   };
 
   const resetWorkout = () => {
@@ -57,39 +65,40 @@ export default function MathWorkout() {
     setResults(null);
   };
 
+  const retryWorkout = () => {
+    setGameState('countdown');
+    setResults(null);
+  };
+
   const saveScore = async (newResult) => {
-    const scores = JSON.parse(localStorage.getItem('math_workout_scores') || '[]');
-    
-    // Check if user already has a score for this difficulty
-    const existingIndex = scores.findIndex(s => s.userName === userName && s.difficulty === difficulty);
-    
-    const entry = {
-      ...newResult,
-      userName,
-      date: new Date().toISOString(),
-      id: Date.now()
-    };
-
-    if (existingIndex !== -1) {
-      // If new score is higher (or same score but faster time), overwrite
-      const prev = scores[existingIndex];
-      if (newResult.score > prev.score || (newResult.score === prev.score && newResult.time < prev.time)) {
-        scores[existingIndex] = entry;
-      }
-    } else {
-      scores.push(entry);
-    }
-
-    // Sort globally still for Hall of Fame if needed, but we'll filter in the lobby
-    scores.sort((a, b) => b.score - a.score || a.time - b.time);
-    localStorage.setItem('math_workout_scores', JSON.stringify(scores.slice(0, 100))); // Keep top 100
-
-    // Save to Supabase
     try {
+      const entry = {
+        userName,
+        difficulty,
+        score: newResult.score,
+        time: newResult.time,
+        accuracy: newResult.accuracy,
+        wrong: newResult.wrong
+      };
+
+      // The database RPC now handles the "only if faster" check automatically
       await saveMathScore(entry);
-      console.log('Score synced to Supabase');
+      console.log('Result processed by Database.');
+
+      // Update local storage for the lobby display
+      const localScores = JSON.parse(localStorage.getItem('math_workout_scores') || '[]');
+      const localIdx = localScores.findIndex(s => s.userName.toLowerCase() === userName.toLowerCase() && s.difficulty === difficulty);
+      const localEntry = { ...newResult, userName, date: new Date().toISOString(), id: Date.now() };
+      
+      if (localIdx !== -1) {
+        if (newResult.time < localScores[localIdx].time) localScores[localIdx] = localEntry;
+      } else {
+        localScores.push(localEntry);
+      }
+      localStorage.setItem('math_workout_scores', JSON.stringify(localScores));
+      
     } catch (err) {
-      console.error('Database sync failed:', err);
+      console.error('Save failed:', err);
     }
   };
 
@@ -132,14 +141,21 @@ export default function MathWorkout() {
             />
             <button
               onClick={handleEnterWorkout}
-              disabled={!userName.trim()}
-              className="w-full py-4 rounded-2xl font-display font-bold text-lg text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:scale-100"
+              disabled={!userName.trim() || isRegistering}
+              className="w-full py-4 rounded-2xl font-display font-bold text-lg text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-2"
               style={{ 
                 background: 'var(--turquoise)',
                 boxShadow: '0 8px 16px -4px rgba(0,210,181,0.3)'
               }}
             >
-              Enter Workout
+              {isRegistering ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  Registering...
+                </>
+              ) : (
+                'Enter Workout'
+              )}
             </button>
           </div>
         </div>
@@ -163,7 +179,7 @@ export default function MathWorkout() {
         <WorkoutResults 
           results={results} 
           onReset={resetWorkout} 
-          onSave={saveScore}
+          onRetry={retryWorkout}
         />
       )}
     </div>

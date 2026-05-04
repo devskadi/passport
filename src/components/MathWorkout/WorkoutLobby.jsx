@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Trophy, Zap, Flame, Star, Loader2 } from 'lucide-react';
 import { getLeaderboard } from '../../lib/api';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 const DIFFICULTIES = [
   { id: 'easy', name: 'Easy', desc: 'Basics: + and -', icon: Zap, color: 'var(--turquoise)' },
@@ -18,7 +19,10 @@ export default function WorkoutLobby({ onStart, userName }) {
     async function fetchScores() {
       setLoading(true);
       try {
-        const data = await getLeaderboard(selectedDiff);
+        let data = [];
+        if (isSupabaseConfigured) {
+          data = await getLeaderboard(selectedDiff);
+        }
         setDbScores(data || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
@@ -103,25 +107,50 @@ export default function WorkoutLobby({ onStart, userName }) {
               <Loader2 className="animate-spin" size={24} />
             </div>
           ) : dbScores.length > 0 ? (
-            dbScores.map((entry, i) => (
-              <div key={entry.id || i} className="flex items-center justify-between p-3 sm:px-4">
-                <div className="flex items-center gap-3">
-                  <span className="font-display font-black text-lg w-6" style={{ color: i === 0 ? 'var(--yellow-dark)' : 'var(--ink-mute)' }}>
-                    {i + 1}
-                  </span>
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium text-sm" style={{ color: 'var(--ink)' }}>{entry.user_name}</span>
-                    {entry.user_name === userName && (
-                      <span className="text-[9px] font-bold uppercase tracking-tight text-turquoise">Personal Best</span>
-                    )}
+            dbScores.map((entry, i) => {
+              const isTop3 = i < 3;
+              const rankColors = [
+                'linear-gradient(135deg, #FFD700 0%, #B8860B 100%)', // Gold
+                'linear-gradient(135deg, #C0C0C0 0%, #808080 100%)', // Silver
+                'linear-gradient(135deg, #CD7F32 0%, #8B4513 100%)'  // Bronze
+              ];
+
+              return (
+                <div 
+                  key={entry.id || i} 
+                  className={`flex items-center justify-between p-4 transition-all ${isTop3 ? 'my-1 rounded-xl mx-2 shadow-sm' : ''}`}
+                  style={{ 
+                    background: isTop3 ? `${rankColors[i]}15` : 'transparent',
+                    borderLeft: isTop3 ? `4px solid ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32'}` : 'none'
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-display font-black text-sm ${isTop3 ? 'text-white' : 'text-ink-mute'}`}
+                      style={{ 
+                        background: isTop3 ? rankColors[i] : 'transparent',
+                        boxShadow: isTop3 ? '0 4px 8px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={`font-bold ${isTop3 ? 'text-sm sm:text-base' : 'text-sm'}`} style={{ color: 'var(--ink)' }}>
+                        {entry.user_name}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-sans text-sm font-black" style={{ color: 'var(--turquoise-dark)' }}>
+                      {entry.time_seconds.toFixed(2)}s
+                    </div>
+                    <div className="text-[10px] font-bold opacity-60" style={{ color: 'var(--ink-mute)' }}>
+                      {entry.score} / 20
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-mono text-xs font-bold" style={{ color: 'var(--turquoise-dark)' }}>{Math.round(entry.score)} pts</div>
-                  <div className="text-[10px]" style={{ color: 'var(--ink-mute)' }}>{entry.time_seconds.toFixed(1)}s</div>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="p-8 text-center text-sm" style={{ color: 'var(--ink-mute)' }}>
               No records for {selectedDiff} yet.

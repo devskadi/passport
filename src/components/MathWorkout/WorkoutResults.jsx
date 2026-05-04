@@ -1,15 +1,8 @@
 import React from 'react';
-import { Trophy, Clock, Target, RotateCcw, Share2, Save } from 'lucide-react';
+import { Trophy, Clock, Target, RotateCcw, Home } from 'lucide-react';
 
-export default function WorkoutResults({ results, onReset, onSave }) {
-  const [saved, setSaved] = React.useState(false);
+export default function WorkoutResults({ results, onReset, onRetry }) {
   const { score, time, accuracy, difficulty, questions, wrong } = results;
-
-  const handleSave = () => {
-    if (saved) return;
-    onSave(results);
-    setSaved(true);
-  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 duration-500">
@@ -40,7 +33,7 @@ export default function WorkoutResults({ results, onReset, onSave }) {
             <span className="text-xs font-bold tracking-widest uppercase">Total Score</span>
           </div>
           <div className="font-display font-black text-4xl" style={{ color: 'var(--ink)' }}>
-            {score.toLocaleString()}
+            {score} <span className="text-xl opacity-30">/ {questions}</span>
           </div>
         </div>
 
@@ -67,7 +60,7 @@ export default function WorkoutResults({ results, onReset, onSave }) {
 
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
         <button
-          onClick={onReset}
+          onClick={onRetry}
           className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-display font-bold text-lg bg-white border-2 border-slate-100 hover:border-turquoise hover:text-turquoise transition-all active:scale-95"
           style={{ color: 'var(--ink-soft)' }}
         >
@@ -76,16 +69,15 @@ export default function WorkoutResults({ results, onReset, onSave }) {
         </button>
         
         <button
-          onClick={handleSave}
-          disabled={saved}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-display font-bold text-lg text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onReset}
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-display font-bold text-lg text-white shadow-lg transition-all active:scale-95"
           style={{ 
-            background: saved ? 'var(--turquoise-dark)' : 'var(--turquoise)',
-            boxShadow: saved ? 'none' : '0 8px 20px -6px rgba(13,181,166,0.6)'
+            background: 'var(--turquoise)',
+            boxShadow: '0 8px 20px -6px rgba(13,181,166,0.6)'
           }}
         >
-          {saved ? <Share2 size={20} /> : <Save size={20} />}
-          {saved ? 'Saved!' : 'Save Result'}
+          <Home size={20} />
+          Back Home
         </button>
       </div>
 
